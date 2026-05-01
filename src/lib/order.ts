@@ -28,14 +28,16 @@ export const QUANTIDADE_OPTIONS = [
   { value: "1", label: "1 foto — R$ 8,90", price: "8,90" },
   { value: "2", label: "2 fotos — R$ 15,00", price: "15,00" },
   { value: "3", label: "3 fotos — R$ 20,00", price: "20,00" },
-  { value: "4+", label: "4+ fotos — combinar", price: "combinar" },
+  { value: "4", label: "4 fotos — R$ 24,90", price: "24,90" },
+  { value: "10", label: "10 fotos — R$ 34,90", price: "34,90" },
 ] as const;
 
 export const PRICE_MAP: Record<string, string> = {
   "1": "8,90",
   "2": "15,00",
   "3": "20,00",
-  "4+": "combinar",
+  "4": "24,90",
+  "10": "34,90",
 };
 
 export const orderSchema = z.object({
@@ -45,10 +47,9 @@ export const orderSchema = z.object({
     .trim()
     .min(14, "Informe um WhatsApp válido")
     .max(16, "Número muito longo"),
-  estado: z.enum(ESTADOS_BR, { message: "Selecione um estado" }),
   personalidade: z.string().min(1, "Escolha uma opção"),
   personalidade_outro: z.string().trim().max(120).optional().or(z.literal("")),
-  quantidade: z.enum(["1", "2", "3", "4+"], { message: "Selecione a quantidade" }),
+  quantidade: z.enum(["1", "2", "3", "4", "10"], { message: "Selecione a quantidade" }),
   cenario: z.string().optional().or(z.literal("")),
   observacoes: z.string().max(400).optional().or(z.literal("")),
 }).refine(

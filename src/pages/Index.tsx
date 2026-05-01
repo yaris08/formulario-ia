@@ -20,7 +20,6 @@ import {
 import { SelfieUpload } from "@/components/SelfieUpload";
 import {
   CENARIOS,
-  ESTADOS_BR,
   PERSONALIDADES,
   PRICE_MAP,
   QUANTIDADE_OPTIONS,
@@ -49,7 +48,7 @@ const Index = () => {
   const personalidade = form.watch("personalidade");
   const quantidade = form.watch("quantidade");
   const observacoes = form.watch("observacoes") ?? "";
-  const price = useMemo(() => PRICE_MAP[quantidade ?? ""] ?? "8,90", [quantidade]);
+  const price = useMemo(() => PRICE_MAP[quantidade ?? ""] ?? "—", [quantidade]);
 
   async function onSubmit(values: OrderFormValues) {
     if (!selfie) {
@@ -74,7 +73,6 @@ const Index = () => {
       const { error: insErr } = await supabase.from("pedidos").insert({
         nome: values.nome.trim(),
         whatsapp: values.whatsapp.trim(),
-        estado: values.estado,
         personalidade: finalPersonalidade,
         quantidade: values.quantidade,
         cenario: values.cenario || null,
@@ -126,7 +124,7 @@ const Index = () => {
         <h1 className="font-display text-[clamp(2rem,5vw,3rem)] leading-tight mb-3">
           Foto <span className="text-gold">Ultra-Realista</span>
           <br />
-          com o Mito
+          com o Mito ou o Ídolo
         </h1>
         <p className="text-[0.95rem] text-muted-foreground tracking-[0.05em] uppercase">
           Tecnologia de IA — Resultado em até 24h
@@ -159,44 +157,21 @@ const Index = () => {
               <FieldError msg={form.formState.errors.nome?.message} />
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="field-label">
-                  WhatsApp <span className="required-mark">*</span>
-                </label>
-                <Input
-                  inputMode="tel"
-                  placeholder="(00) 00000-0000"
-                  value={form.watch("whatsapp") ?? ""}
-                  onChange={(e) =>
-                    form.setValue("whatsapp", maskWhatsapp(e.target.value), {
-                      shouldValidate: true,
-                    })
-                  }
-                />
-                <FieldError msg={form.formState.errors.whatsapp?.message} />
-              </div>
-              <div>
-                <label className="field-label">
-                  Estado <span className="required-mark">*</span>
-                </label>
-                <Select
-                  value={form.watch("estado") ?? ""}
-                  onValueChange={(v) =>
-                    form.setValue("estado", v as OrderFormValues["estado"], {
-                      shouldValidate: true,
-                    })
-                  }
-                >
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {ESTADOS_BR.map((uf) => (
-                      <SelectItem key={uf} value={uf}>{uf}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FieldError msg={form.formState.errors.estado?.message} />
-              </div>
+            <div>
+              <label className="field-label">
+                WhatsApp <span className="required-mark">*</span>
+              </label>
+              <Input
+                inputMode="tel"
+                placeholder="(00) 00000-0000"
+                value={form.watch("whatsapp") ?? ""}
+                onChange={(e) =>
+                  form.setValue("whatsapp", maskWhatsapp(e.target.value), {
+                    shouldValidate: true,
+                  })
+                }
+              />
+              <FieldError msg={form.formState.errors.whatsapp?.message} />
             </div>
           </section>
 
@@ -315,8 +290,8 @@ const Index = () => {
                 Valor do pedido
               </div>
               <div className="font-display text-3xl text-gold leading-none">
-                {price === "combinar" ? (
-                  <span className="text-xl">A combinar</span>
+                {price === "—" ? (
+                  <span className="text-xl text-muted-foreground">—</span>
                 ) : (
                   <>
                     <small className="text-base text-muted-foreground mr-1">R$</small>
