@@ -71,10 +71,40 @@ export default function AdminLogin() {
         email: normalized,
         password,
       });
-      if (error) throw error;
+      if (error) {
+        const code = (error as { code?: string }).code;
+        if (code === "email_not_confirmed") {
+          setInlineError(
+            "Conta ainda não está pronta. Aguarde alguns segundos e tente novamente, ou use 'Redefinir senha'.",
+          );
+          return;
+        }
+        if (/invalid/i.test(error.message)) {
+          setInlineError("E-mail ou senha incorretos.");
+          return;
+        }
+        throw error;
+      }
       toast.success("Login realizado!");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao autenticar";
+      setInlineError(msg);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleResetPassword() {
+    setInlineError(null);
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(ADMIN_EMAIL, {
+        redirectTo: `${window.location.origin}/admin/login`,
+      });
+      if (error) throw error;
+      toast.success("Enviamos um link para redefinir sua senha.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erro ao solicitar redefinição";
       setInlineError(msg);
     } finally {
       setBusy(false);
@@ -216,6 +246,14 @@ export default function AdminLogin() {
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar"}
             </Button>
+            <button
+              type="button"
+              onClick={handleResetPassword}
+              disabled={busy}
+              className="w-full text-center text-[0.75rem] uppercase tracking-[0.08em] text-muted-foreground hover:text-gold transition-colors"
+            >
+              Esqueci minha senha
+            </button>
           </form>
         )}
       </div>

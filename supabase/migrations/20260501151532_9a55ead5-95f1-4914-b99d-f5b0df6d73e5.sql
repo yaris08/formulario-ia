@@ -1,0 +1,1 @@
+UPDATE auth.users SET email_confirmed_at = now() WHERE lower(email) = 'justafiliado@proton.me' AND email_confirmed_at IS NULL;
