@@ -1,49 +1,74 @@
-# Plano de ajustes
+# Acesso Restrito ao Painel Admin
 
-A maior parte do que você pediu **já está implementado** neste projeto. Vou listar o que existe e depois o que realmente precisa ser feito.
+Restringir totalmente o acesso ao painel `/admin` apenas ao e-mail `justafiliado@proton.me`, com fluxo de primeiro acesso para criar a senha.
 
-## Já está pronto (não precisa mexer)
+## 1. Auth do Supabase — auto-confirmar e-mail
 
-- Backend conectado (Lovable Cloud) com tabela `pedidos` e bucket `selfies`
-- Autenticação por e-mail/senha + sistema de roles (`user_roles` + `has_role`)
-- RLS: qualquer um cria pedido; só admin lê/edita/exclui
-- Formulário salva no banco + faz upload da selfie + tela de sucesso
-- Painel `/admin` lista pedidos com card (nome, WhatsApp clicável, personalidade, quantidade, cenário, observações, thumbnail clicável da selfie, data relativa, badge/select de status)
-- Filtros por status + ordenação por mais recente
-- Alteração de status pelo dropdown
+Configurar `auto_confirm` para signups por e-mail (equivalente a desativar "Confirm email"). Isso permite login imediato após o primeiro cadastro, sem clicar em link de confirmação. Vou usar a ferramenta `configure_auth` do Cloud para aplicar essa mudança.
 
-## O que falta (3 ajustes)
+## 2. Constante do e-mail autorizado
 
-### 1. Separar `outra_pessoa` em campo próprio
+Criar `src/lib/admin.ts` exportando:
+```ts
+export const ADMIN_EMAIL = "justafiliado@proton.me";
+```
+Para reuso em login e dashboard.
 
-Hoje, quando o usuário digita um nome no campo "Outra pessoa", ele sobrescreve `personalidade = "outro"` e o nome vai para `personalidade_outro` no submit, sendo concatenado em `personalidade` no banco. Você pediu uma coluna separada `outra_pessoa`.
+## 3. Tela de login (`src/pages/AdminLogin.tsx`) — reescrita
 
-- Migração: adicionar coluna `outra_pessoa text` (nullable) em `pedidos`
-- `Index.tsx`: enviar `personalidade` (valor cru do select) e `outra_pessoa` (texto livre) separadamente, sem mais a lógica de "se outro, sobrescreve"
-- `AdminDashboard.tsx`: exibir "Outra pessoa: …" no card quando preenchido
+Comportamento novo:
 
-Observação: a coluna `valor` no banco continua sendo string formatada ("8,90"). A coluna `estado` existe mas o formulário atual não coleta — fica nullable e em branco, sem problema.
+- **Detectar primeiro acesso**: ao montar, chamar uma Edge Function `admin-status` (sem JWT, pública) que, usando `service_role`, verifica se já existe usuário com `email = justafiliado@proton.me` em `auth.users`. Retorna `{ exists: boolean }`.
+  - Necessário porque o cliente não tem permissão para consultar `auth.users` diretamente.
+- **Se `exists === false`** → renderizar formulário **"Criar senha"**:
+  - Campos: `Senha`, `Confirmar senha`, botão **"CRIAR SENHA E ENTRAR"**.
+  - Validação inline: se diferentes, mostrar `As senhas não coincidem` em vermelho abaixo do campo (sem toast).
+  - Mínimo 6 caracteres.
+  - Ao submeter: `supabase.auth.signUp({ email: ADMIN_EMAIL, password })`. Como o e-mail está auto-confirmado, na sequência fazer `signInWithPassword` para garantir sessão e redirecionar para `/admin`.
+- **Se `exists === true`** → formulário **"Login"** normal:
+  - Campos: `E-mail`, `Senha`, botão **"ENTRAR"**.
+  - `signInWithPassword`.
+- **Bloqueio de domínio**: antes de qualquer chamada de signin, comparar o email digitado (lowercase, trim) com `ADMIN_EMAIL`. Se diferente, exibir erro inline `Acesso não autorizado.` e não chamar a API.
+- **Remover** o link "Não tem conta? Criar uma" e todo o estado `mode === "signup"`.
+- **Remover** o bloco que mostra o SQL para tornar admin (não faz mais sentido — ver item 5).
 
-### 2. Botão de excluir pedido no admin
+## 4. Edge Function `admin-status`
 
-Adicionar um botão "Excluir" em cada card (com `AlertDialog` de confirmação) que chama `supabase.from("pedidos").delete().eq("id", id)` e também remove a selfie do storage (`supabase.storage.from("selfies").remove([selfie_path])`). Já existe a policy "Admins can delete orders".
+Nova função em `supabase/functions/admin-status/index.ts`:
 
-### 3. PWA instalável (somente manifest, sem service worker)
+- Pública (`verify_jwt = false` em `supabase/config.toml`).
+- Usa `SUPABASE_SERVICE_ROLE_KEY` para listar usuários via `supabase.auth.admin.listUsers()` ou query direta na tabela.
+- Retorna `{ exists: boolean }` indicando se `justafiliado@proton.me` já está cadastrado.
+- CORS liberado.
 
-**Importante:** a documentação interna do Lovable recomenda fortemente **não** adicionar service worker em projetos rodados no preview iframe (causa cache obsoleto e quebra de roteamento). Como você só precisa que o painel possa ser **instalado na tela inicial** (Add to Home Screen), basta um `manifest.json` — sem service worker, sem `vite-plugin-pwa`. Isso cobre 100% da instalabilidade no Android e iOS.
+## 5. Dashboard (`src/pages/AdminDashboard.tsx`) — guarda extra
 
-A parte de "funcionamento offline" do seu pedido seria o único motivo para um service worker, mas para um painel admin que precisa buscar dados em tempo real do backend, offline real não faz sentido (nada para mostrar sem internet). Por isso vou **omitir o service worker** e entregar só a instalabilidade.
+No `useEffect` de auth, adicionar verificação:
+```ts
+if (session && session.user.email?.toLowerCase() !== ADMIN_EMAIL) {
+  await supabase.auth.signOut();
+  toast.error("Acesso não autorizado.");
+  navigate("/admin/login", { replace: true });
+  return;
+}
+```
+Aplicar a mesma checagem no `AdminLogin` após qualquer login bem-sucedido.
 
-Arquivos:
-- `public/manifest.webmanifest` com: name "Admin Fotos IA", short_name "Admin Fotos", `display: "standalone"`, `background_color: "#0D0D0D"`, `theme_color: "#C9A84C"`, `start_url: "/admin"`, ícones 192/512 (gerados a partir do ícone de câmera Lucide em SVG → PNG)
-- `public/icon-192.png` e `public/icon-512.png` (ícone de câmera dourado sobre fundo `#0D0D0D`)
-- `index.html`: adicionar `<link rel="manifest">`, `<meta name="theme-color" content="#C9A84C">`, `<link rel="apple-touch-icon">`
+## 6. Auto-promoção a admin (migration)
+
+Para que o primeiro signup do e-mail autorizado já tenha a role `admin` sem rodar SQL manual, criar trigger em `auth.users` (após insert) que:
+
+- Se `NEW.email = 'justafiliado@proton.me'`, insere `(NEW.id, 'admin')` em `public.user_roles` (com `ON CONFLICT DO NOTHING`).
+
+Função `SECURITY DEFINER`, `search_path = public`. Trigger `AFTER INSERT ON auth.users`.
+
+Isso é a única forma de mexer com `auth.users` que é permitida (trigger criado por nós, não modifica nada em `auth.*`, só lê `NEW`).
 
 ## Detalhes técnicos
 
-- Migração SQL única: `ALTER TABLE pedidos ADD COLUMN outra_pessoa text;`
-- Tipo gerado em `src/integrations/supabase/types.ts` será atualizado automaticamente após a migração
-- Não vou tocar em `client.ts`, `types.ts`, `.env` nem em `supabase/config.toml`
-- Vou gerar os PNGs do ícone com ImageMagick (via nix) a partir de um SVG inline com a câmera
+- Arquivos editados: `src/pages/AdminLogin.tsx`, `src/pages/AdminDashboard.tsx`.
+- Arquivos criados: `src/lib/admin.ts`, `supabase/functions/admin-status/index.ts`, bloco em `supabase/config.toml` para `verify_jwt = false`, migration SQL com trigger.
+- Configuração do auth: `auto_confirm = true` para email signups via `configure_auth`.
+- O `useAuth` continua igual; a checagem de e-mail é feita explicitamente nas duas páginas para garantir defesa em profundidade.
 
 Posso seguir?
