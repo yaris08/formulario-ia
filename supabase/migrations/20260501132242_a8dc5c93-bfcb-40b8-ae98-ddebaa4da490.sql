@@ -1,0 +1,1 @@
+ALTER TABLE public.pedidos ALTER COLUMN estado DROP NOT NULL;

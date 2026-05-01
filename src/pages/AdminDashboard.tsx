@@ -224,9 +224,11 @@ function PedidoCard({
               >
                 {pedido.whatsapp} <ExternalLink className="h-3 w-3" />
               </a>
-              <span className="ml-2 text-[0.7rem] uppercase tracking-[0.08em] text-muted-foreground">
-                {pedido.estado}
-              </span>
+              {pedido.estado && (
+                <span className="ml-2 text-[0.7rem] uppercase tracking-[0.08em] text-muted-foreground">
+                  {pedido.estado}
+                </span>
+              )}
             </div>
             <span className="text-[0.7rem] text-muted-foreground whitespace-nowrap">
               {formatDistanceToNow(new Date(pedido.created_at), { addSuffix: true, locale: ptBR })}
