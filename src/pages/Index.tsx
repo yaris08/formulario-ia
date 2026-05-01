@@ -127,7 +127,7 @@ const Index = () => {
           com o seu Ídolo
         </h1>
         <p className="text-[0.95rem] text-muted-foreground tracking-[0.05em] uppercase">
-          Tecnologia de IA — Resultado em até 24h
+          Resultado em até 24h
         </p>
       </header>
 
