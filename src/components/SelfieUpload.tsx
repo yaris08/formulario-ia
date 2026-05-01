@@ -54,8 +54,8 @@ export function SelfieUpload({ file, onChange }: SelfieUploadProps) {
       }}
       onDragLeave={() => setDragOver(false)}
       onDrop={onDrop}
-      className={`relative cursor-pointer rounded border border-dashed bg-surface-1 px-6 py-10 text-center transition-colors ${
-        dragOver ? "border-gold bg-surface-2" : "border-border hover:border-gold hover:bg-surface-2"
+      className={`relative cursor-pointer rounded-[12px] border-[1.5px] border-dashed bg-surface-1 px-6 py-10 text-center transition-colors ${
+        dragOver ? "border-gold bg-surface-2" : "border-[#2A2A2A] hover:border-gold hover:bg-surface-2"
       }`}
     >
       <input

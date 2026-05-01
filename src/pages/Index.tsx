@@ -121,7 +121,7 @@ const Index = () => {
           </div>
           <span className="h-px w-16 bg-gradient-to-l from-transparent to-gold" />
         </div>
-        <h1 className="font-display text-[clamp(2rem,5vw,3rem)] leading-tight mb-3">
+        <h1 className="font-display text-[clamp(2.5rem,7vw,3rem)] leading-tight mb-3">
           Foto <span className="text-gold">Ultra-Realista</span>
           <br />
           com o seu Ídolo
