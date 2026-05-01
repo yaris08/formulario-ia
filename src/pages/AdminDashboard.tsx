@@ -27,6 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { Tables, Enums } from "@/integrations/supabase/types";
+import { ADMIN_EMAIL } from "@/lib/admin";
 
 type Pedido = Tables<"pedidos">;
 type Status = Enums<"pedido_status">;
@@ -51,9 +52,22 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!session) navigate("/admin/login", { replace: true });
-    else if (!isAdmin) navigate("/admin/login", { replace: true });
-    else loadPedidos();
+    if (!session) {
+      navigate("/admin/login", { replace: true });
+      return;
+    }
+    if (session.user.email?.toLowerCase() !== ADMIN_EMAIL) {
+      supabase.auth.signOut().then(() => {
+        toast.error("Acesso não autorizado.");
+        navigate("/admin/login", { replace: true });
+      });
+      return;
+    }
+    if (!isAdmin) {
+      navigate("/admin/login", { replace: true });
+      return;
+    }
+    loadPedidos();
   }, [authLoading, session, isAdmin, navigate]);
 
   async function loadPedidos() {
