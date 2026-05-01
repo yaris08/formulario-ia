@@ -142,7 +142,7 @@ const Index = () => {
       <div className="container max-w-2xl px-6 pb-16">
         <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
           {/* DADOS */}
-          <section className="mb-10">
+          <section className="mb-6">
             <div className="section-label">Seus dados</div>
 
             <div className="mb-5">
@@ -176,7 +176,7 @@ const Index = () => {
           </section>
 
           {/* PEDIDO */}
-          <section className="mb-10">
+          <section className="mb-6">
             <div className="section-label">Seu pedido</div>
 
             <div className="mb-5">
@@ -272,7 +272,7 @@ const Index = () => {
           </section>
 
           {/* SELFIE */}
-          <section className="mb-10">
+          <section className="mb-6">
             <div className="section-label">Sua selfie</div>
             <SelfieUpload file={selfie} onChange={setSelfie} />
             <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
