@@ -45,8 +45,8 @@
 
     --success: 145 42% 48%;           /* #4CAF78 */
 
-    --border: 38 56% 51% / 0.2;       /* gold @ 20% */
-    --border-strong: 38 56% 51% / 0.5;
+    --border: 38 56% 25%;             /* gold tom escuro */
+    --border-strong: 38 56% 40%;
     --input: 0 0% 13.3%;
     --ring: 38 56% 51%;
 
@@ -56,7 +56,7 @@
 
 @layer base {
   * {
-    border-color: hsl(var(--gold) / 0.2);
+    @apply border-border;
   }
 
   html {
