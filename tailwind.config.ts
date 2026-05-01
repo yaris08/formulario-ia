@@ -14,11 +14,22 @@ export default {
     },
     extend: {
       colors: {
-        border: "hsl(var(--border))",
+        border: "hsl(var(--border) / 0.4)",
+        "border-strong": "hsl(var(--border-strong) / 0.6)",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        gold: {
+          DEFAULT: "hsl(var(--gold))",
+          light: "hsl(var(--gold-light))",
+        },
+        surface: {
+          1: "hsl(var(--surface-1))",
+          2: "hsl(var(--surface-2))",
+          3: "hsl(var(--surface-3))",
+        },
+        success: "hsl(var(--success))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
