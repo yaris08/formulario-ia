@@ -1,30 +1,26 @@
-## Adicionar caixa "Pedir foto com qualquer pessoa"
+## Trocar caixa-atalho por campo de texto livre
 
-Em `src/pages/Index.tsx`, logo abaixo do select "Com quem você quer a foto?" (e antes do bloco condicional que aparece quando `personalidade === "outro"`), adicionar uma caixa clicável que deixa claro que o usuário pode pedir foto com qualquer pessoa, não apenas as listadas.
+Em `src/pages/Index.tsx`, remover a caixa-botão "Quero foto com outra pessoa" e colocar no lugar um **campo de texto simples sempre visível**, igual ao de Observações.
 
 ### Comportamento
 
-- A caixa fica sempre visível, abaixo do select de personalidade.
-- Ao clicar, define `personalidade = "outro"` no formulário (mesmo efeito de selecionar "Outro" no dropdown), o que automaticamente abre o campo "Quem é a personalidade?" já existente.
-- Quando `personalidade === "outro"`, a caixa fica destacada (borda dourada) indicando que está ativa.
-
-### Visual
-
-- Caixa com borda sutil, fundo `surface-2`, padding confortável, cantos arredondados.
-- Ícone pequeno (ex: `UserPlus` do lucide) à esquerda em dourado.
-- Título curto: **"Quero foto com outra pessoa"**
-- Linha de apoio em `text-muted-foreground` menor: "Atriz, atleta, familiar, amigo… qualquer pessoa pública ou privada."
-- Estado ativo: `border-gold` + leve `bg-gold/5`.
-- Acessível: `<button type="button">` para não submeter o form.
+- O campo aparece logo abaixo do select "Com quem você quer a foto?".
+- Label: **"Outra pessoa (opcional)"**.
+- Placeholder: "Digite o nome de qualquer pessoa".
+- Texto de apoio menor abaixo: "Atriz, atleta, familiar, amigo… qualquer pessoa pública ou privada."
+- Quando o usuário digita algo no campo, automaticamente seta `personalidade = "outro"` no form (para passar na validação do schema, que exige uma das duas: opção do select OU `personalidade_outro` preenchido com `personalidade = "outro"`).
+- O bloco condicional antigo `{personalidade === "outro" && (…)}` é removido (vira redundante, já que o campo está sempre visível).
+- Remover import não usado de `UserPlus`.
 
 ### Detalhes técnicos
 
-- Importar `UserPlus` de `lucide-react`.
-- Inserir o bloco entre o `</div>` que fecha o campo do select de personalidade (linha ~202) e o `{personalidade === "outro" && (` (linha ~204).
-- Nenhuma mudança em schema, validação, `order.ts`, banco ou submit. A caixa é apenas um atalho de UI para o valor "outro" que já existe.
+- Usar `<Input>` registrado com `form.register("personalidade_outro")` mais um `onChange` customizado que também chama `form.setValue("personalidade", "outro")` quando o valor não está vazio.
+- Remover linhas 203-225 (botão) e 228-239 (bloco condicional).
+- Inserir o novo `<div className="mb-5">` com Input + texto de apoio entre o fechamento do div do select e o `<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">` da quantidade.
+- Nenhuma mudança em `order.ts`, schema, banco ou submit. O submit já trata `personalidade === "outro"` usando `personalidade_outro`.
 
 ### Arquivos alterados
 
 ```text
-src/pages/Index.tsx   adiciona caixa-atalho abaixo do select de personalidade
+src/pages/Index.tsx   substitui caixa-botão por Input livre sempre visível
 ```
