@@ -321,10 +321,10 @@ const Index = () => {
                       key={r.label}
                       className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4 border-b border-border/40 pb-2 last:border-0 last:pb-0"
                     >
-                      <dt className="text-[0.7rem] uppercase tracking-[0.08em] text-muted-foreground shrink-0">
+                      <dt className="text-[11px] uppercase tracking-[0.08em] text-[#666666] shrink-0">
                         {r.label}
                       </dt>
-                      <dd className="text-[0.85rem] text-foreground sm:text-right sm:max-w-[60%]">
+                      <dd className="text-[14px] sm:text-[15px] font-medium text-[#F5F0E8] sm:text-right sm:max-w-[60%]">
                         {r.value}
                       </dd>
                     </div>
@@ -332,15 +332,15 @@ const Index = () => {
                 </dl>
 
                 <div className="mt-5 flex items-end justify-between gap-4 border-t border-gold/30 pt-4">
-                  <div className="text-[0.75rem] uppercase tracking-[0.08em] text-muted-foreground">
+                  <div className="text-[11px] uppercase tracking-[0.08em] text-[#666666]">
                     Valor do pedido
                   </div>
-                  <div className="font-display text-3xl text-gold leading-none">
+                  <div className="font-display text-3xl font-bold text-[#C9A84C] leading-none">
                     {price === "—" ? (
                       <span className="text-xl text-muted-foreground">—</span>
                     ) : (
                       <>
-                        <small className="text-base text-muted-foreground mr-1">R$</small>
+                        <small className="text-base text-[#C9A84C]/80 mr-1 font-bold">R$</small>
                         {price}
                       </>
                     )}
@@ -358,7 +358,7 @@ const Index = () => {
           <Button
             type="submit"
             disabled={submitting}
-            className="w-full h-auto py-4 text-[0.85rem] font-medium uppercase tracking-[0.1em] bg-gold text-background hover:bg-gold/90"
+            className="w-full h-auto py-4 rounded-[4px] text-[0.85rem] font-medium uppercase tracking-[0.1em] bg-gold text-background hover:bg-gold/90"
           >
             {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "Enviar Pedido"}
           </Button>
