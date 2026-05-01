@@ -22,6 +22,7 @@ export type Database = {
           id: string
           nome: string
           observacoes: string | null
+          outra_pessoa: string | null
           personalidade: string
           quantidade: string
           selfie_path: string
@@ -36,6 +37,7 @@ export type Database = {
           id?: string
           nome: string
           observacoes?: string | null
+          outra_pessoa?: string | null
           personalidade: string
           quantidade: string
           selfie_path: string
@@ -50,6 +52,7 @@ export type Database = {
           id?: string
           nome?: string
           observacoes?: string | null
+          outra_pessoa?: string | null
           personalidade?: string
           quantidade?: string
           selfie_path?: string

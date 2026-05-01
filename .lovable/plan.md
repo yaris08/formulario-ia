@@ -1,58 +1,49 @@
-## Ajustes visuais pontuais no formulário
+# Plano de ajustes
 
-Mudanças apenas de estilo — nenhuma alteração em lógica, validação ou backend.
+A maior parte do que você pediu **já está implementado** neste projeto. Vou listar o que existe e depois o que realmente precisa ser feito.
 
-### 1. Tipografia (H1 mobile)
-Em `src/pages/Index.tsx`, aumentar levemente o tamanho mínimo do H1 para mais impacto no mobile, mantendo "Ultra-Realista" em dourado.
-- Trocar `text-[clamp(2rem,5vw,3rem)]` por `text-[clamp(2.5rem,7vw,3rem)]`.
-- Apenas as linhas em branco ("Foto" / "com o seu Ídolo") são afetadas pelo tamanho — o `<span className="text-gold">` continua igual.
+## Já está pronto (não precisa mexer)
 
-### 2. Inputs e Selects — borda visível
-Atualmente a borda fica abafada (token `--border` com opacidade 0.4 no tailwind).
+- Backend conectado (Lovable Cloud) com tabela `pedidos` e bucket `selfies`
+- Autenticação por e-mail/senha + sistema de roles (`user_roles` + `has_role`)
+- RLS: qualquer um cria pedido; só admin lê/edita/exclui
+- Formulário salva no banco + faz upload da selfie + tela de sucesso
+- Painel `/admin` lista pedidos com card (nome, WhatsApp clicável, personalidade, quantidade, cenário, observações, thumbnail clicável da selfie, data relativa, badge/select de status)
+- Filtros por status + ordenação por mais recente
+- Alteração de status pelo dropdown
 
-Em `src/index.css`, ajustar o token `--input` para que `Input`, `Select` e `Textarea` (que usam `border-input`) tenham borda sólida visível:
-- `--input: 0 0% 16.5%;` (≈ #2A2A2A)
-- Mantém o fundo dos campos como está.
+## O que falta (3 ajustes)
 
-Como `Input`, `SelectTrigger` e `Textarea` já usam `border border-input`, a mudança propaga automaticamente sem editar componentes.
+### 1. Separar `outra_pessoa` em campo próprio
 
-### 3. Área de upload da selfie
-Em `src/components/SelfieUpload.tsx`:
-- Trocar `border border-dashed` por `border-[1.5px] border-dashed`.
-- Trocar a cor da borda por `#2A2A2A` (usar `border-[#2A2A2A]` e `hover:border-gold`).
-- Trocar `rounded` por `rounded-[12px]`.
-- Manter fundo `bg-surface-1` (≈ #181818, equivalente ao #1A1A1A pedido).
+Hoje, quando o usuário digita um nome no campo "Outra pessoa", ele sobrescreve `personalidade = "outro"` e o nome vai para `personalidade_outro` no submit, sendo concatenado em `personalidade` no banco. Você pediu uma coluna separada `outra_pessoa`.
 
-### 4. Resumo do pedido — hierarquia label/valor
-Em `src/pages/Index.tsx`, dentro do bloco "RESUMO DO PEDIDO":
+- Migração: adicionar coluna `outra_pessoa text` (nullable) em `pedidos`
+- `Index.tsx`: enviar `personalidade` (valor cru do select) e `outra_pessoa` (texto livre) separadamente, sem mais a lógica de "se outro, sobrescreve"
+- `AdminDashboard.tsx`: exibir "Outra pessoa: …" no card quando preenchido
 
-**Labels (NOME, WHATSAPP, etc.)**
-- De `text-[0.7rem] ... text-muted-foreground` para `text-[11px] uppercase tracking-[0.08em] text-[#666666]`.
+Observação: a coluna `valor` no banco continua sendo string formatada ("8,90"). A coluna `estado` existe mas o formulário atual não coleta — fica nullable e em branco, sem problema.
 
-**Valores preenchidos**
-- De `text-[0.85rem] text-foreground` para `text-[14px] sm:text-[15px] font-medium text-[#F5F0E8]`.
+### 2. Botão de excluir pedido no admin
 
-**Bloco "Valor do pedido"**
-- Label: manter pequeno e cinza (`text-[11px] text-[#666666]`).
-- Valor: forçar dourado `#C9A84C`, `font-bold`, e tamanho maior que os demais campos do resumo (manter `font-display text-3xl` mas trocar a cor para `text-[#C9A84C] font-bold`).
+Adicionar um botão "Excluir" em cada card (com `AlertDialog` de confirmação) que chama `supabase.from("pedidos").delete().eq("id", id)` e também remove a selfie do storage (`supabase.storage.from("selfies").remove([selfie_path])`). Já existe a policy "Admins can delete orders".
 
-### 5. Botão CTA
-No `<Button type="submit">` em `src/pages/Index.tsx`:
-- Adicionar `rounded-[4px]` para sobrepor o `rounded-md` padrão do componente.
-- Manter `bg-gold text-background` (#C9A84C / #0D0D0D) e o restante das classes intactas.
+### 3. PWA instalável (somente manifest, sem service worker)
 
-### 6. Espaçamento entre seções
-Em `src/pages/Index.tsx`:
-- Trocar `mb-10` por `mb-6` nas seções? Não — o pedido é **aumentar** o respiro para 24px.
-- `mb-10` = 40px (atual). Reduzir para `mb-6` = 24px conforme o valor solicitado, aplicado nas seções "Seus dados", "Seu pedido", "Sua selfie" e antes do "Resumo".
+**Importante:** a documentação interna do Lovable recomenda fortemente **não** adicionar service worker em projetos rodados no preview iframe (causa cache obsoleto e quebra de roteamento). Como você só precisa que o painel possa ser **instalado na tela inicial** (Add to Home Screen), basta um `manifest.json` — sem service worker, sem `vite-plugin-pwa`. Isso cobre 100% da instalabilidade no Android e iOS.
 
-Correção: o usuário diz "atualmente está apertado" e pede 24px. Como `mb-10` já é 40px, vou interpretar como aumentar o gap **interno** entre blocos dentro de cada seção, não entre seções. Para evitar erro de interpretação, vou:
-- Manter `mb-10` (40px) entre seções (já confortável).
-- Aumentar o respiro entre o título da seção (`section-label`) e os campos: aumentar `mb-5` do `.section-label` (em `src/index.css`) para `mb-6` (24px).
+A parte de "funcionamento offline" do seu pedido seria o único motivo para um service worker, mas para um painel admin que precisa buscar dados em tempo real do backend, offline real não faz sentido (nada para mostrar sem internet). Por isso vou **omitir o service worker** e entregar só a instalabilidade.
 
-Se o usuário quiser explicitamente 24px entre seções, basta avisar e troco `mb-10` por `mb-6`.
+Arquivos:
+- `public/manifest.webmanifest` com: name "Admin Fotos IA", short_name "Admin Fotos", `display: "standalone"`, `background_color: "#0D0D0D"`, `theme_color: "#C9A84C"`, `start_url: "/admin"`, ícones 192/512 (gerados a partir do ícone de câmera Lucide em SVG → PNG)
+- `public/icon-192.png` e `public/icon-512.png` (ícone de câmera dourado sobre fundo `#0D0D0D`)
+- `index.html`: adicionar `<link rel="manifest">`, `<meta name="theme-color" content="#C9A84C">`, `<link rel="apple-touch-icon">`
 
-### Arquivos afetados
-- `src/pages/Index.tsx` — H1, hierarquia do resumo, CTA radius.
-- `src/index.css` — token `--input`, espaçamento do `.section-label`.
-- `src/components/SelfieUpload.tsx` — borda tracejada e radius.
+## Detalhes técnicos
+
+- Migração SQL única: `ALTER TABLE pedidos ADD COLUMN outra_pessoa text;`
+- Tipo gerado em `src/integrations/supabase/types.ts` será atualizado automaticamente após a migração
+- Não vou tocar em `client.ts`, `types.ts`, `.env` nem em `supabase/config.toml`
+- Vou gerar os PNGs do ícone com ImageMagick (via nix) a partir de um SVG inline com a câmera
+
+Posso seguir?
