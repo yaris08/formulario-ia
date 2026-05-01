@@ -283,28 +283,70 @@ const Index = () => {
             </div>
           </section>
 
-          {/* PRICE */}
-          <div className="mb-8 flex items-center justify-between gap-4 rounded border border-border bg-surface-1 p-6">
-            <div>
-              <div className="text-[0.75rem] uppercase tracking-[0.08em] text-muted-foreground mb-1">
-                Valor do pedido
+          {/* RESUMO DO PEDIDO */}
+          {(() => {
+            const v = form.watch();
+            const finalPersonalidade =
+              v.personalidade === "outro"
+                ? (v.personalidade_outro?.trim() || "—")
+                : (v.personalidade || "—");
+            const qtdLabel =
+              QUANTIDADE_OPTIONS.find((o) => o.value === v.quantidade)?.label.split(" — ")[0] ||
+              "—";
+            const rows: Array<{ label: string; value: string }> = [
+              { label: "Nome", value: v.nome?.trim() || "—" },
+              { label: "WhatsApp", value: v.whatsapp?.trim() || "—" },
+              { label: "Personalidade", value: finalPersonalidade },
+              { label: "Quantidade", value: qtdLabel },
+              { label: "Cenário", value: v.cenario || "—" },
+            ];
+            if (v.observacoes?.trim()) {
+              rows.push({ label: "Observações", value: v.observacoes.trim() });
+            }
+            return (
+              <div className="mb-8 rounded border border-border bg-surface-1 p-6">
+                <div className="text-[0.7rem] uppercase tracking-[0.15em] text-gold mb-4">
+                  Resumo do pedido
+                </div>
+                <dl className="space-y-2.5">
+                  {rows.map((r) => (
+                    <div
+                      key={r.label}
+                      className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4 border-b border-border/40 pb-2 last:border-0 last:pb-0"
+                    >
+                      <dt className="text-[0.7rem] uppercase tracking-[0.08em] text-muted-foreground shrink-0">
+                        {r.label}
+                      </dt>
+                      <dd className="text-[0.85rem] text-foreground sm:text-right sm:max-w-[60%]">
+                        {r.value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+
+                <div className="mt-5 flex items-end justify-between gap-4 border-t border-gold/30 pt-4">
+                  <div className="text-[0.75rem] uppercase tracking-[0.08em] text-muted-foreground">
+                    Valor do pedido
+                  </div>
+                  <div className="font-display text-3xl text-gold leading-none">
+                    {price === "—" ? (
+                      <span className="text-xl text-muted-foreground">—</span>
+                    ) : (
+                      <>
+                        <small className="text-base text-muted-foreground mr-1">R$</small>
+                        {price}
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <p className="mt-4 text-[0.75rem] leading-relaxed text-muted-foreground">
+                  O pagamento é feito via Pix{" "}
+                  <strong className="text-foreground">somente após você aprovar a foto</strong>. Sem risco.
+                </p>
               </div>
-              <div className="font-display text-3xl text-gold leading-none">
-                {price === "—" ? (
-                  <span className="text-xl text-muted-foreground">—</span>
-                ) : (
-                  <>
-                    <small className="text-base text-muted-foreground mr-1">R$</small>
-                    {price}
-                  </>
-                )}
-              </div>
-            </div>
-            <p className="max-w-[12rem] text-right text-[0.75rem] leading-relaxed text-muted-foreground">
-              O pagamento é feito via Pix{" "}
-              <strong className="text-foreground">somente após você aprovar a foto</strong>. Sem risco.
-            </p>
-          </div>
+            );
+          })()}
 
           <Button
             type="submit"

@@ -1,51 +1,26 @@
-## Ajustes no formulário
+## Substituir caixa de "Valor do pedido" por resumo do pedido
 
-### 1. Remover campo "Estado"
-- `src/pages/Index.tsx`: remover o `Select` de Estado (campo da seção "Seus dados"). O campo WhatsApp passa a ocupar a linha inteira.
-- `src/pages/Index.tsx` (`onSubmit`): não enviar mais `estado` no insert do pedido.
-- `src/lib/order.ts`: remover `estado` do `orderSchema` (e remover/ignorar `ESTADOS_BR` do import em `Index.tsx`). A constante pode ficar exportada caso o admin ainda use, mas removerei o uso na página pública.
-- `src/pages/AdminDashboard.tsx`: remover qualquer exibição da coluna `estado` (continua existindo na tabela do banco como nullable já — não precisa migration).
+Em `src/pages/Index.tsx`, substituir o bloco atual (apenas valor + texto do Pix lado a lado) por uma caixa única de **Resumo do pedido** que mostra, em tempo real conforme o usuário preenche:
 
-Observação: a coluna `estado` no banco é `NOT NULL` hoje. Vou rodar uma migration curta para torná-la `NULLABLE`, assim novos pedidos sem estado funcionam sem quebrar registros antigos.
+- Nome
+- WhatsApp
+- Personalidade (usa o valor de "Outro" se for o caso)
+- Quantidade (ex: "2 fotos")
+- Cenário (se selecionado)
+- Observações (só aparece se preenchido)
 
-### 2. Atualizar tabela de preços/quantidades
-Em `src/lib/order.ts`:
+Logo abaixo da lista, separado por uma linha dourada sutil:
 
-```text
-1 foto  — R$ 8,90
-2 fotos — R$ 15,00
-3 fotos — R$ 20,00
-4 fotos — R$ 24,90   (novo valor, antes era "combinar")
-10 fotos — R$ 34,90  (nova opção)
-```
+- **Valor do pedido** alinhado à direita, usando o mesmo display dourado de hoje (ou "—" se a quantidade ainda não foi escolhida).
 
-- Atualizar `QUANTIDADE_OPTIONS` e `PRICE_MAP` com esses 5 valores.
-- Atualizar o enum do Zod: `z.enum(["1","2","3","4","10"])`.
-- Em `Index.tsx` remover o tratamento especial de "combinar" na caixa de preço (todos os valores agora são numéricos).
+Por último, dentro da mesma caixa:
 
-### 3. Caixa de preço atualiza dinamicamente
-Já está reativa via `form.watch("quantidade")` + `useMemo`. Vou apenas garantir que o valor padrão exibido antes de qualquer seleção seja "—" (em vez de "8,90"), para deixar claro que ele muda conforme a escolha do usuário.
+- "O pagamento é feito via Pix **somente após você aprovar a foto**. Sem risco."
 
-### 4. Atualizar título
-Em `src/pages/Index.tsx`, alterar:
-
-```text
-Foto Ultra-Realista
-com o Mito
-```
-para
-```text
-Foto Ultra-Realista
-com o Mito ou o Ídolo
-```
-
-(mantendo "Ultra-Realista" em dourado).
+Cada campo não preenchido aparece como "—" para o resumo nunca ficar vazio. A reatividade é via `form.watch()`, sem alterar lógica de submit, validação, schema ou backend.
 
 ### Arquivos alterados
 
 ```text
-src/lib/order.ts            preços + enum + remover estado do schema
-src/pages/Index.tsx         remove campo Estado, novo título, preço dinâmico "—"
-src/pages/AdminDashboard.tsx  remove exibição da coluna estado
-supabase migration          ALTER TABLE pedidos ALTER COLUMN estado DROP NOT NULL
+src/pages/Index.tsx   substitui o bloco "PRICE" por um bloco "RESUMO DO PEDIDO"
 ```
