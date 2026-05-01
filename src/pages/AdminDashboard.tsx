@@ -94,6 +94,20 @@ export default function AdminDashboard() {
     toast.success("Status atualizado.");
   }
 
+  async function deletePedido(id: string, selfiePath: string) {
+    const { error } = await supabase.from("pedidos").delete().eq("id", id);
+    if (error) {
+      toast.error("Erro ao excluir pedido.");
+      return;
+    }
+    // Best-effort: remove selfie do storage
+    if (selfiePath) {
+      await supabase.storage.from("selfies").remove([selfiePath]);
+    }
+    setPedidos((prev) => prev.filter((p) => p.id !== id));
+    toast.success("Pedido excluído.");
+  }
+
   const filtered = useMemo(
     () => (filter === "all" ? pedidos : pedidos.filter((p) => p.status === filter)),
     [pedidos, filter],
@@ -164,6 +178,7 @@ export default function AdminDashboard() {
                 pedido={p}
                 selfieUrl={selfieUrls[p.selfie_path]}
                 onStatusChange={(s) => updateStatus(p.id, s)}
+                onDelete={() => deletePedido(p.id, p.selfie_path)}
               />
             ))}
           </div>
@@ -202,10 +217,12 @@ function PedidoCard({
   pedido,
   selfieUrl,
   onStatusChange,
+  onDelete,
 }: {
   pedido: Pedido;
   selfieUrl?: string;
   onStatusChange: (s: Status) => void;
+  onDelete: () => void;
 }) {
   const waNumber = pedido.whatsapp.replace(/\D/g, "");
   return (
@@ -249,6 +266,12 @@ function PedidoCard({
             <span className="text-muted-foreground">Personalidade:</span>{" "}
             <span className="text-gold">{pedido.personalidade}</span>
           </p>
+          {pedido.outra_pessoa && (
+            <p className="text-[0.85rem]">
+              <span className="text-muted-foreground">Outra pessoa:</span>{" "}
+              <span className="text-gold">{pedido.outra_pessoa}</span>
+            </p>
+          )}
           <p className="text-[0.85rem]">
             <span className="text-muted-foreground">Quantidade:</span> {pedido.quantidade} foto(s) ·{" "}
             <span className="text-muted-foreground">Valor:</span> R$ {pedido.valor}
@@ -267,18 +290,52 @@ function PedidoCard({
         </p>
       )}
 
-      <div className="mt-4 flex items-center gap-3">
-        <span className="text-[0.7rem] uppercase tracking-[0.08em] text-muted-foreground">Status</span>
-        <Select value={pedido.status} onValueChange={(v) => onStatusChange(v as Status)}>
-          <SelectTrigger className="h-9 max-w-[180px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_OPTIONS.map((s) => (
-              <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="text-[0.7rem] uppercase tracking-[0.08em] text-muted-foreground">Status</span>
+          <Select value={pedido.status} onValueChange={(v) => onStatusChange(v as Status)}>
+            <SelectTrigger className="h-9 max-w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((s) => (
+                <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4 mr-1.5" />
+              Excluir
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir pedido?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação não pode ser desfeita. O pedido de{" "}
+                <strong className="text-foreground">{pedido.nome}</strong> e a selfie enviada
+                serão removidos permanentemente.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={onDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </article>
   );
