@@ -65,15 +65,13 @@ const Index = () => {
         .upload(path, selfie, { contentType: selfie.type, upsert: false });
       if (upErr) throw upErr;
 
-      const finalPersonalidade =
-        values.personalidade === "outro"
-          ? (values.personalidade_outro ?? "").trim()
-          : values.personalidade;
+      const outraPessoa = (values.personalidade_outro ?? "").trim();
 
       const { error: insErr } = await supabase.from("pedidos").insert({
         nome: values.nome.trim(),
         whatsapp: values.whatsapp.trim(),
-        personalidade: finalPersonalidade,
+        personalidade: values.personalidade,
+        outra_pessoa: outraPessoa || null,
         quantidade: values.quantidade,
         cenario: values.cenario || null,
         observacoes: values.observacoes?.trim() || null,
