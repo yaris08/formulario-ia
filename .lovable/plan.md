@@ -1,89 +1,51 @@
-## Formulário "Foto Ultra-Realista com o Mito" + Painel Admin
+## Ajustes no formulário
 
-Vou recriar fielmente o formulário enviado (mantendo o visual escuro com dourado e as fontes Cormorant Garamond + DM Sans), porém usando os componentes do projeto (shadcn) para inputs, selects e botões. Os pedidos serão salvos no Lovable Cloud, e você terá um painel admin protegido por login para visualizá-los.
+### 1. Remover campo "Estado"
+- `src/pages/Index.tsx`: remover o `Select` de Estado (campo da seção "Seus dados"). O campo WhatsApp passa a ocupar a linha inteira.
+- `src/pages/Index.tsx` (`onSubmit`): não enviar mais `estado` no insert do pedido.
+- `src/lib/order.ts`: remover `estado` do `orderSchema` (e remover/ignorar `ESTADOS_BR` do import em `Index.tsx`). A constante pode ficar exportada caso o admin ainda use, mas removerei o uso na página pública.
+- `src/pages/AdminDashboard.tsx`: remover qualquer exibição da coluna `estado` (continua existindo na tabela do banco como nullable já — não precisa migration).
 
-### Página pública: `/` (formulário)
+Observação: a coluna `estado` no banco é `NOT NULL` hoje. Vou rodar uma migration curta para torná-la `NULLABLE`, assim novos pedidos sem estado funcionam sem quebrar registros antigos.
 
-Reproduz o layout do HTML enviado:
-
-- **Header**: ícone circular dourado, título "Foto **Ultra-Realista** com o Mito" (palavra em dourado), subtítulo "Tecnologia de IA — Resultado em até 24h".
-- **Trust bar**: "+ de 749 fotos entregues", "Privacidade garantida", "Pague só após aprovar".
-- **Seção "Seus dados"**: Nome completo, WhatsApp (com máscara `(00) 00000-0000`), Estado (UF dropdown).
-- **Seção "Seu pedido"**:
-  - Personalidade (agrupada em "Política" e "Artistas / Cantores", com opção "Outro" que revela um campo de texto).
-  - Quantidade de fotos (1 — R$ 8,90 / 2 — R$ 15,00 / 3 — R$ 20,00 / 4+ — combinar).
-  - Tipo de cenário (Abraçados, Pose formal, Ao ar livre, Evento/Palco, Sem preferência).
-  - Observações (textarea, contador 0/400).
-- **Seção "Sua selfie"**: zona de upload com drag-and-drop, preview da imagem, aceita JPG/PNG/WEBP até 10MB. 4 dicas de qualidade.
-- **Caixa de preço**: atualiza dinamicamente conforme a quantidade escolhida. Texto: "Pagamento via Pix somente após você aprovar a foto".
-- **Botão dourado** "Enviar Pedido" com spinner durante envio.
-- **Disclaimer** sobre uso das fotos e LGPD.
-- **Tela de sucesso** após envio: ícone check verde + "Pedido recebido! Em breve entraremos em contato pelo seu WhatsApp."
-
-Validação com zod no submit (nome, whatsapp, estado, personalidade, quantidade obrigatórios; selfie obrigatória).
-
-### Backend (Lovable Cloud)
-
-**Tabela `pedidos`**:
-- `id`, `created_at`
-- `nome`, `whatsapp`, `estado`
-- `personalidade`, `quantidade`, `cenario`, `observacoes`
-- `selfie_url` (caminho no storage)
-- `valor` (texto: "8,90", "15,00", etc.)
-- `status` (`novo` | `em_producao` | `aprovado` | `pago` | `cancelado`) — default `novo`
-
-**Storage bucket `selfies`** (privado): cada selfie é salva com nome único; o admin acessa via signed URL.
-
-**RLS**:
-- `INSERT` no `pedidos`: público (anônimo pode criar pedido).
-- `SELECT/UPDATE` no `pedidos`: apenas usuários com role `admin`.
-- Bucket `selfies`: upload público, leitura apenas para `admin`.
-
-**Tabela de roles** (`user_roles` + enum `app_role` + função `has_role`) seguindo o padrão seguro de roles separadas.
-
-### Painel admin: `/admin`
-
-- Rota `/admin/login`: tela de login (email + senha) com o mesmo visual escuro/dourado.
-- Rota `/admin` (protegida, requer role `admin`):
-  - Lista de pedidos em cards/tabela, ordenada do mais recente.
-  - Cada pedido mostra: nome, whatsapp (clicável → abre WhatsApp), estado, personalidade, quantidade, cenário, observações, valor, data, status.
-  - Thumbnail da selfie (clicável para abrir em tamanho grande via signed URL).
-  - Dropdown para mudar o status do pedido.
-  - Filtros por status no topo.
-  - Contador de pedidos novos.
-- Botão de logout.
-
-**Criação do primeiro admin**: após você criar sua conta em `/admin/login`, eu te explico como rodar uma query rápida (1 linha) para te marcar como admin. (Não dá pra hardcodar porque o user_id só existe após o cadastro.)
-
-### Detalhes técnicos
-
-- Toda a validação client-side com `zod` + `react-hook-form`.
-- Máscara do WhatsApp aplicada inline (sem lib extra).
-- Upload da selfie direto para o bucket via supabase-js (com tamanho/MIME validados antes).
-- Após o `INSERT` do pedido, mostra a tela de sucesso e bloqueia novo envio na mesma sessão.
-- Fontes Google (Cormorant Garamond + DM Sans) carregadas no `index.html`.
-- Cores adicionadas como tokens semânticos no `index.css` e `tailwind.config.ts` (gold, dark surfaces) — nada de cores hardcoded nos componentes.
-- Toaster (sonner) para mensagens de erro de envio.
-
-### Arquivos principais a criar/editar
+### 2. Atualizar tabela de preços/quantidades
+Em `src/lib/order.ts`:
 
 ```text
-src/pages/Index.tsx                    formulário público
-src/pages/admin/Login.tsx              login do admin
-src/pages/admin/Dashboard.tsx          lista de pedidos
-src/components/order-form/...          seções do formulário
-src/components/SelfieUpload.tsx        upload com drag&drop + preview
-src/hooks/useAuth.ts                   sessão + role admin
-src/lib/validation.ts                  schemas zod
-src/integrations/supabase/...          client + types (auto)
-src/App.tsx                            rotas /admin/login e /admin
-src/index.css + tailwind.config.ts     tokens gold/dark + fontes
-index.html                             preconnect + Google Fonts
-migration                              tabelas, RLS, bucket, roles
+1 foto  — R$ 8,90
+2 fotos — R$ 15,00
+3 fotos — R$ 20,00
+4 fotos — R$ 24,90   (novo valor, antes era "combinar")
+10 fotos — R$ 34,90  (nova opção)
 ```
 
-### Fora do escopo (posso adicionar depois se quiser)
+- Atualizar `QUANTIDADE_OPTIONS` e `PRICE_MAP` com esses 5 valores.
+- Atualizar o enum do Zod: `z.enum(["1","2","3","4","10"])`.
+- Em `Index.tsx` remover o tratamento especial de "combinar" na caixa de preço (todos os valores agora são numéricos).
 
-- Pagamento via Pix integrado (hoje fica manual, como no original).
-- Notificação por e-mail/Telegram quando chega novo pedido.
-- Edição/exclusão de pedidos pelo admin (por ora, só mudança de status).
+### 3. Caixa de preço atualiza dinamicamente
+Já está reativa via `form.watch("quantidade")` + `useMemo`. Vou apenas garantir que o valor padrão exibido antes de qualquer seleção seja "—" (em vez de "8,90"), para deixar claro que ele muda conforme a escolha do usuário.
+
+### 4. Atualizar título
+Em `src/pages/Index.tsx`, alterar:
+
+```text
+Foto Ultra-Realista
+com o Mito
+```
+para
+```text
+Foto Ultra-Realista
+com o Mito ou o Ídolo
+```
+
+(mantendo "Ultra-Realista" em dourado).
+
+### Arquivos alterados
+
+```text
+src/lib/order.ts            preços + enum + remover estado do schema
+src/pages/Index.tsx         remove campo Estado, novo título, preço dinâmico "—"
+src/pages/AdminDashboard.tsx  remove exibição da coluna estado
+supabase migration          ALTER TABLE pedidos ALTER COLUMN estado DROP NOT NULL
+```

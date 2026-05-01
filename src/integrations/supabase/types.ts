@@ -18,7 +18,7 @@ export type Database = {
         Row: {
           cenario: string | null
           created_at: string
-          estado: string
+          estado: string | null
           id: string
           nome: string
           observacoes: string | null
@@ -32,7 +32,7 @@ export type Database = {
         Insert: {
           cenario?: string | null
           created_at?: string
-          estado: string
+          estado?: string | null
           id?: string
           nome: string
           observacoes?: string | null
@@ -46,7 +46,7 @@ export type Database = {
         Update: {
           cenario?: string | null
           created_at?: string
-          estado?: string
+          estado?: string | null
           id?: string
           nome?: string
           observacoes?: string | null
