@@ -246,6 +246,14 @@ export default function AdminLogin() {
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar"}
             </Button>
+            <button
+              type="button"
+              onClick={handleResetPassword}
+              disabled={busy}
+              className="w-full text-center text-[0.75rem] uppercase tracking-[0.08em] text-muted-foreground hover:text-gold transition-colors"
+            >
+              Esqueci minha senha
+            </button>
           </form>
         )}
       </div>
