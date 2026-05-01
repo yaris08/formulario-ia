@@ -124,7 +124,7 @@ const Index = () => {
         <h1 className="font-display text-[clamp(2rem,5vw,3rem)] leading-tight mb-3">
           Foto <span className="text-gold">Ultra-Realista</span>
           <br />
-          com o Mito ou o Ídolo
+          com o seu Ídolo
         </h1>
         <p className="text-[0.95rem] text-muted-foreground tracking-[0.05em] uppercase">
           Tecnologia de IA — Resultado em até 24h
