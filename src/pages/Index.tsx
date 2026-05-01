@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Camera, Check, Clock, Shield, Loader2 } from "lucide-react";
+import { Camera, Check, Clock, Shield, Loader2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -199,6 +199,30 @@ const Index = () => {
                 </SelectContent>
               </Select>
               <FieldError msg={form.formState.errors.personalidade?.message} />
+
+              <button
+                type="button"
+                onClick={() =>
+                  form.setValue("personalidade", "outro", { shouldValidate: true })
+                }
+                className={`mt-3 flex w-full items-start gap-3 rounded border p-4 text-left transition-colors ${
+                  personalidade === "outro"
+                    ? "border-gold bg-gold/5"
+                    : "border-border bg-surface-2 hover:border-gold/50"
+                }`}
+              >
+                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold/40">
+                  <UserPlus className="h-4 w-4 text-gold" strokeWidth={1.5} />
+                </span>
+                <span className="flex flex-col gap-0.5">
+                  <span className="text-[0.85rem] font-medium text-foreground">
+                    Quero foto com outra pessoa
+                  </span>
+                  <span className="text-[0.75rem] leading-relaxed text-muted-foreground">
+                    Atriz, atleta, familiar, amigo… qualquer pessoa pública ou privada.
+                  </span>
+                </span>
+              </button>
             </div>
 
             {personalidade === "outro" && (
